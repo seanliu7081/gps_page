@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="Sample efficient policy learning for manipulation in 3D">
+  <meta name="keywords" content="Generative Model, Equivariance, Geometric deep learning, Manipulation">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Imagination Policy</title>
+  <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+  </script>
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({ tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']], processEscapes: true}, "HTML-CSS": {minScaleAdjust: 100} });
+  </script>
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-PYVRSFMDRL');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/favicon.png">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+<body>
+
+<nav class="navbar" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+  <div class="navbar-menu">
+    <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
+      <a class="navbar-item" href="https://haojhuang.github.io/">
+      <span class="icon">
+          <i class="fas fa-home"></i>
+      </span>
+      </a>
+
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link">
+          More Related Research
+        </a>
+        <div class="navbar-dropdown">
+          <a class="navbar-item" href="https://haojhuang.github.io/etp_page/">
+            Equivairant Transporter Net
+          </a>
+          <a class="navbar-item" href="https://arxiv.org/abs/2308.07948">
+            Leveraging Symmetries in Pick and Place
+          </a>
+          <a class="navbar-item" href="https://haojhuang.github.io/edge_grasp_page/">
+            Edge Grasp Network
+          </a>
+          <a class="navbar-item" href="https://haojhuang.github.io/fourtran_page/">
+            Fourier Transporter
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</nav>
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">Imagination Policy: Using Generative Point
+            Cloud Models for Learning Manipulation Policies </h1>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="https://haojhuang.github.io/">Haojie Huang</a><sup>1</sup>,</span>
+            <span class="author-block">
+              <a href="https://sites.google.com/view/karlschmeckpeper">Karl Schmeckpeper</a><sup>$\dagger$2</sup>,</span>
+            <span class="author-block">
+              <a href="https://pointw.github.io/">Dian Wang</a><sup>$\dagger$1</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://ondrejbiza.com/#">Ondrej Biza</a><sup>$\dagger$12</sup>,
+            </span>
+
+            <span class="author-block">
+              <a href="https://h-freax.github.io/">Yaoyao Qian</a><sup>$\ddagger$1</sup>,</span>
+            <span class="author-block">
+              <a href="https://andyliu7081.github.io/">Haotian Liu</a><sup>$\ddagger$3</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://saulbatman.github.io/">Mingxi Jia</a><sup>$\ddagger$4</sup>,
+            </span>
+
+            <span class="author-block">
+              <a href="https://helpinghandslab.netlify.app/people/">Robert Platt</a><sup>12</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://www.robinwalters.com/">Robin Walters</a><sup>1</sup>
+            </span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <div class="author-block"><sup>1</sup>Northeastern Univeristy, Boston, MA 02115</div>
+            
+            <div>
+            <span class="author-block"><sup>2</sup>Boston Dynamics AI Institute, </span>
+            <span class="author-block"><sup>3</sup>Worcester Polytechnic Institute, </span>
+            <span class="author-block"><sup>4</sup>Brown Univeristy </span>
+            </div>
+
+            <div>
+            <span class="author-block"><sup>$\dagger$, $\ddagger$</sup>equal conrtibution </span>
+            
+            <!-- <span class="author-block"><sup>$\star$</sup>equally advising</span> -->
+            </div>
+
+            <div> <b>CoRL 2024</b><div>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- PDF Link. -->
+              <!-- <span class="link-block">
+                <a href="https://openreview.net/forum?id=UulwvAU1W0"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span> -->
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2406.11740"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              
+              <!-- Video Link. -->
+              <span class="link-block">
+                <a href="https://www.youtube.com/watch?v=EpYUDb8bUP4"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-youtube"></i>
+                  </span>
+                  <span>Video</span>
+                </a>
+              </span>
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href="https://github.com/HaojHuang/imagination-policy-cor24"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+
+              <!-- talk Link. -->
+              <span class="link-block">
+                <a href="https://www.youtube.com/watch?v=8Wu9nGKMJNg&list=PL2oxSfYMr6hUdBEN1mBxX0MLJB4_X-vaM&t=4700s"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-youtube"></i>
+                  </span>
+                  <span>Talk</span>
+                  </a>
+              </span>
+
+              <!-- Poster -->
+              <span class="link-block">
+                <a href="./static/images/CoRL24_Imagination_Policy_poster.pdf"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-file-pdf"></i>
+                  </span>
+                  <span>Poster</span>
+                  </a>
+              </span>
+
+
+
+
+              <!-- https://www.youtube.com/watch?v=8Wu9nGKMJNg&list=PL2oxSfYMr6hUdBEN1mBxX0MLJB4_X-vaM&t=4700s -->
+              <!-- Dataset Link.
+              <span class="link-block">
+                <a href="https://github.com/google/nerfies/releases/tag/0.1"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="far fa-images"></i>
+                  </span>
+                  <span>Data</span>
+                  </a> -->
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+
+<section class="hero is-light is-small">
+  <div class="hero-body">
+    <div class="container">
+      <div id="results-carousel" class="carousel results-carousel">
+        <div class="item item-steve">
+          <video poster="" id="steve" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/imagine_mug_tree.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-chair-tp">
+          <video poster="" id="chair-tp" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/imagine_flower.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-shiba">
+          <video poster="" id="shiba" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/imagine_pour.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+
+        <div class="item item-fullbody">
+          <video poster="" id="fullbody" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/mugTree1_cut.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-blueshirt">
+          <video poster="" id="blueshirt" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/flower1_cut.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-mask">
+          <video poster="" id="mask" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/pour1_cut.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Humans can imagine goal states during planning and perform actions to match those goals.
+            In this work, we propose $\text{Imagination Policy}$, a novel multi-task key-frame policy network for solving high-precision pick and place tasks.
+            Instead of learning actions directly, $\text{Imagination Policy}$ generates point clouds to imagine desired states which are then translated to actions 
+            using rigid action estimation. This transforms action inference into a local generative task. We leverage pick and place symmetries underlying the tasks in the generation process
+            and achieve extremely high sample efficiency and generalizability to unseen configurations.
+            Finally, we demonstrate state-of-the-art performance across various tasks on the RLbench benchmark compared with several strong baselines.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Abstract. -->
+
+    <!-- Paper video. -->
+    <!-- <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Video</h2>
+        <div class="publication-video">
+          <iframe src="https://www.youtube.com/embed/MrKrnHhk8IA?rel=0&amp;showinfo=0"
+                  frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
+      </div>
+    </div> -->
+    <!--/ Paper video. -->
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column">
+        <h2 class="title is-3">Introduction</h2>
+        <div class="content has-text-justified">
+          <p>
+            
+            <b>Imagination and Rigid Action: </b> 
+            Humans can look at a scene and imagine how it would look with the objects in it rearranged.
+            However, most robotic policy learning algorithms directly map observations to actions, which limits transferability
+            between tasks and different robots.
+
+            Inspired by how humans solve tasks, we propose $\text{Imagination Policy}$ which generates a new point cloud combining the inputs into a desirable configuration
+            using a conditional point flow model. Compared to directly generating actions, this adds many degrees of freedom
+            to the generative process which aids optimization and sensitivity to geometric interactions.
+          </p>
+          <img src="./static/images/intro.png"></img>
+          <p>
+            <b>Bi-equivariance:</b> Robot data is notably more costly to acquire compared to that in computer vision and natural language processing (NLP). 
+            It posed sample efficiency as an important part in robot learning. 
+            Pick-place tasks are symmetric with respect to the group of
+            3D rotations $SO(3)$. 
+            <!-- The outcome of a grasp attempt is invariant to rotations and translations which
+            move both the grasped object and the gripper by the same amount. Place interactions have similar
+            symmetries involving separate motions of the picked object and the placed object. Consider a task
+            involving placing an object in a slot. Independent rotations of the object $(g_1)$ and the slot $(g_2)$ result
+            in a change $(a'=g_2ag_1^{-1})$ in the requisite action needed to perform the insertion. This is referred
+            to as bi-equivariance. Previous works have explored bi-equivariant symmetries
+            in manipulation policy learning and achieved dramatic improvements in sample efficiency. -->
+            $\text{Imagination Policy}$ achieves bi-equivariance in a multi-task setting with key-frame control. As
+            shown in Figure 1 above, rotations of the flower will result in the same pick pose. Similarly, seperate
+            rotations of the flower and the mug in Figure 1b will not change the generated point cloud.
+          </p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column">
+        <h2 class="title is-3">Method Description</h2>
+        <div class="content has-text-justified">
+          
+
+          <p>
+           <b>Method Overview: </b>
+            We factor action inference into two parts, point cloud generation (Figure 2ab)
+and transformation inference (Figure 2c). In the first part, we train a generative model which, when
+conditioned on $\ell$ (the language instruction), generates a new coordinate for each point of $P_a$ and $P_b$ to approximate $P_{ab}$, i.e.,
+$f_{\text{gen}} \colon (P_a, P_B, \ell) \rightarrow (\hat{P}_{a},\hat{P}_b)$, where $\hat{P}_a \cup \hat{P}_b \approx P_{ab}$. In the second part, we estimate two transformations $\hat{T}_a$ from $P_a$ to $\hat{P}_a$, and $\hat{T}_b$ from $P_b$ to $\hat{P}_b$ using singular value decomposition (SVD).
+          </p>
+          <img src="./static/images/architecture.png"></img>
+          <p>
+            <b>Pair Generation for Place: </b> The place generator generates a pair of objects rearranged togethe, and we also constrained it to satisfy the the bi-equivariance of place sysmmetries. 
+          </p> 
+          <img src="./static/images/pick_generation.png"></img>
+          
+          
+            <p><b>Single Generation for Pick:</b>
+              The pick generator generates the points of the object positioned relative to the gripper point cloud. 
+              Figure 3 illustrates the
+              generation process of grasping the banana by the crown. We also constrained it to satisfy the equivariant pick symmetry.
+ 
+           </p>
+           <img src="./static/images/pipeline.png"></img>
+           <p><b>Keyframe Generation:</b> The keyfram Generation process generates the scenes of (pick, preplace, place). An example is shown in Figure 4. Finally, we trained a multi-task
+            keyframe policy network for manipulation pick and place tasks. Please note it can achieve the transferability between robots. i.e., 
+            the model trained with Franka Panda Gripper can be used to UR5 with Robotiq-85 Gripper, as shown in our real-world experiments.
+          </p>
+        
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column">
+        <h2 class="title is-3">Results</h2>
+        <div class="content has-text-justified">
+          <p>
+           We evaluate $\text{Imagination Policy}$ on 6 tasks from RLbench and baseline it with 3 strong baselines. The task and results are shown in the following figures and tables.
+           Besides simulated experiments, we valided it on 3 real-robot experiments.
+          </p>
+          <img src="./static/images/3d_tasks.png"></img>
+          <img src="./static/images/3d_results.png"></img>
+          <img src="./static/images/real-robot-tests.png"></img>
+          <img src="./static/images/real-robot-results.png"></img>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <center>
+      <video id="teaser" autoplay controls muted loop playsinline width="85%" height="85%">
+        <source src="./static/videos/imagination-policy-real-robot-revise-1080p_compressed.mp4"
+                type="video/mp4">
+      </video>
+    </center>
+      <h3 class="subtitle has-text-centered">
+        video of real robot experiments (trained with 10 demos)
+      </h3>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h3 class="title">Citation</h3>
+    <pre><code>
+      @article{
+        huang2024imagination,
+        title={Imagination Policy: Using Generative Point Cloud Models for Learning Manipulation Policies},
+        author={Haojie Huang and Karl Schmeckpeper and Dian Wang and Ondrej Biza and Yaoyao Qian and Haotian Liu and Mingxi Jia and Robert Platt and Robin Walters},
+        journal={arXiv preprint arXiv:2406.11740},
+        year={2024},}
+    </code></pre>
+  </div>
+</section>
+
+
+
+
+<footer class="footer">
+  <div class="container">
+    
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            Website design borrowed from <a href="https://github.com/nerfies/nerfies.github.io">NeRFies</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
